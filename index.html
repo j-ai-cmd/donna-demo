@@ -532,20 +532,11 @@ var ANSWERS = {
   "What's the deadline on the Robertson matter?": "The Robertson matter has one upcoming deadline: an affidavit must be filed by Thursday 28 August 2026.\n\nThere's also a mediation session booked for 10 September. No items are overdue on this matter."
 };
 
-var sessions = [];   // [{ id, title, isCustom, messages }]
+var sessions = [];
 var activeId = null;
-var thinking = false;
-var pendingResolve = null;  // {fn, session, text} — fires on visibilitychange if timer was frozen
-
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden && pendingResolve) {
-    var p = pendingResolve;
-    pendingResolve = null;
-    p.session.messages.push({ role: 'donna', text: p.text });
-    resolveThinking(p.text);
-    thinking = false;
-  }
-});
+var pendingTimer = null;
+var pendingSession = null;
+var pendingText = null;
 
 /* ── Session helpers ── */
 function makeId() { return Date.now() + Math.random(); }
@@ -558,6 +549,69 @@ function createSession(title, isCustom) {
 }
 
 function getActive() { return sessions.find(function(s) { return s.id === activeId; }); }
+
+/* ── Thinking row — explicit remove + fresh append ── */
+function removeThinkingRow() {
+  var row = document.getElementById('thinking-row');
+  if (row && row.parentNode) row.parentNode.removeChild(row);
+}
+
+function addThinkingRow() {
+  removeThinkingRow();
+  var msgs = document.getElementById('messages');
+  var row = document.createElement('div');
+  row.className = 'bubble-row donna';
+  row.id = 'thinking-row';
+  var b = document.createElement('div');
+  b.className = 'bubble bubble-donna';
+  b.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div>';
+  row.appendChild(b);
+  msgs.appendChild(row);
+  scrollDown();
+}
+
+/* ── Response delivery ── */
+function deliverResponse(session, text) {
+  pendingTimer = null;
+  pendingSession = null;
+  pendingText = null;
+  removeThinkingRow();
+  session.messages.push({ role: 'donna', text: text });
+  appendBubble('donna', text, true);
+  setInputLocked(false);
+  scrollDown();
+}
+
+function scheduleResponse(session, text) {
+  cancelPending();
+  pendingSession = session;
+  pendingText = text;
+  pendingTimer = setTimeout(function() { deliverResponse(session, text); }, 350);
+}
+
+function cancelPending() {
+  if (pendingTimer !== null) { clearTimeout(pendingTimer); pendingTimer = null; }
+  pendingSession = null;
+  pendingText = null;
+  removeThinkingRow();
+  setInputLocked(false);
+}
+
+/* Deliver immediately if the tab was frozen and just became visible */
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && pendingTimer !== null) {
+    clearTimeout(pendingTimer);
+    deliverResponse(pendingSession, pendingText);
+  }
+});
+
+/* ── Input lock ── */
+function setInputLocked(locked) {
+  var inp = document.getElementById('chat-input');
+  var btn = document.getElementById('send-btn');
+  inp.disabled = locked;
+  btn.disabled = locked;
+}
 
 /* ── Render sidebar ── */
 function renderSidebar() {
@@ -615,10 +669,7 @@ function showMessages() {
 
 function renderChat() {
   var session = getActive();
-  if (!session || session.messages.length === 0) {
-    showEmpty();
-    return;
-  }
+  if (!session || session.messages.length === 0) { showEmpty(); return; }
   showMessages();
   var msgs = document.getElementById('messages');
   msgs.innerHTML = '';
@@ -639,112 +690,69 @@ function appendBubble(role, text, animate) {
   return row;
 }
 
-function addThinking() {
-  var msgs = document.getElementById('messages');
-  var row = document.createElement('div');
-  row.className = 'bubble-row donna';
-  row.id = 'thinking-row';
-  var b = document.createElement('div');
-  b.className = 'bubble bubble-donna';
-  b.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div>';
-  row.appendChild(b);
-  msgs.appendChild(row);
-  scrollDown();
-}
-
-function resolveThinking(text) {
-  var row = document.getElementById('thinking-row');
-  if (row) {
-    var b = row.querySelector('.bubble');
-    b.style.animation = '';
-    b.textContent = text;
-    row.removeAttribute('id');
-  }
-  scrollDown();
-}
-
 function scrollDown() {
   var area = document.getElementById('chat-area');
   area.scrollTop = area.scrollHeight;
 }
 
-/* ── New chat ── */
+/* ── Navigation ── */
 function newChat() {
+  cancelPending();
   activeId = null;
-  thinking = false;
   showEmpty();
   renderSidebar();
   closeSidebar();
 }
 
-/* ── Load session ── */
 function loadSession(id) {
+  cancelPending();
   activeId = id;
-  thinking = false;
   renderChat();
   renderSidebar();
 }
 
 /* ── Send suggestion ── */
 function sendSuggestion(btn) {
-  if (thinking) return;
+  if (pendingTimer !== null) return;
   var text = btn.textContent.trim();
 
-  // Create session if needed
   if (activeId === null) {
     var title = text.length > 44 ? text.slice(0, 42) + '…' : text;
     createSession(title, false);
   }
   var session = getActive();
+  if (!session) return;
 
   showMessages();
   session.messages.push({ role: 'user', text: text });
   appendBubble('user', text, true);
-  addThinking();
-  scrollDown();
+  addThinkingRow();
+  setInputLocked(true);
   renderSidebar();
 
-  thinking = true;
-  var answer = ANSWERS[text] || "Here's what I found…";
-  pendingResolve = { session: session, text: answer };
-  setTimeout(function() {
-    pendingResolve = null;
-    session.messages.push({ role: 'donna', text: answer });
-    resolveThinking(answer);
-    thinking = false;
-  }, 350);
+  scheduleResponse(session, ANSWERS[text] || "Here's what donna found…");
 }
 
 /* ── Send custom ── */
 function sendChat() {
-  if (thinking) return;
+  if (pendingTimer !== null) return;
   var inp = document.getElementById('chat-input');
   var text = inp.value.trim();
   if (!text) return;
   inp.value = '';
 
-  // Create session if needed
-  if (activeId === null || (getActive() && getActive().messages.length === 0)) {
-    if (activeId === null) createSession('New chat', true);
-  }
+  if (activeId === null) createSession('New chat', true);
   var session = getActive();
+  if (!session) return;
 
   showMessages();
   session.messages.push({ role: 'user', text: text });
   appendBubble('user', text, true);
-  addThinking();
-  scrollDown();
+  addThinkingRow();
+  setInputLocked(true);
   renderSidebar();
 
-  thinking = true;
-  var reply = 'To use donna MCP, please connect to your Clio Account.';
-  pendingResolve = { session: session, text: reply };
-  setTimeout(function() {
-    pendingResolve = null;
-    session.messages.push({ role: 'donna', text: reply });
-    resolveThinking(reply);
-    thinking = false;
-  }, 350);
+  scheduleResponse(session, 'To use donna MCP, please connect to your Clio Account.');
 }
 
 /* ── Sidebar toggle (mobile) ── */
