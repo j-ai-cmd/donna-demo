@@ -581,11 +581,18 @@ function deliverResponse(session, text) {
   scrollDown();
 }
 
-function scheduleResponse(session, text) {
+var THINK_SHORT = 3000;  /* < 60 chars */
+var THINK_LONG  = 5000;  /* ≥ 60 chars */
+
+function thinkDelay(inputText) {
+  return inputText.length >= 60 ? THINK_LONG : THINK_SHORT;
+}
+
+function scheduleResponse(session, text, inputText) {
   cancelPending();
   pendingSession = session;
   pendingText = text;
-  pendingTimer = setTimeout(function() { deliverResponse(session, text); }, 350);
+  pendingTimer = setTimeout(function() { deliverResponse(session, text); }, thinkDelay(inputText));
 }
 
 function cancelPending() {
@@ -730,7 +737,7 @@ function sendSuggestion(btn) {
   setInputLocked(true);
   renderSidebar();
 
-  scheduleResponse(session, ANSWERS[text] || "Here's what donna found…");
+  scheduleResponse(session, ANSWERS[text] || "Here's what donna found…", text);
 }
 
 /* ── Send custom ── */
@@ -752,7 +759,7 @@ function sendChat() {
   setInputLocked(true);
   renderSidebar();
 
-  scheduleResponse(session, 'To use donna MCP, please connect to your Clio Account.');
+  scheduleResponse(session, 'To use donna MCP, please connect to your Clio Account.', text);
 }
 
 /* ── Sidebar toggle (mobile) ── */
