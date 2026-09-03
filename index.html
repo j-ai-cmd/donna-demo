@@ -466,7 +466,6 @@ html, body {
       </button>
     </div>
     <div class="session-list" id="session-list">
-      <div class="session-empty" id="session-empty">No chats yet.</div>
     </div>
   </aside>
 
@@ -616,15 +615,16 @@ function setInputLocked(locked) {
 /* ── Render sidebar ── */
 function renderSidebar() {
   var list = document.getElementById('session-list');
-  var empty = document.getElementById('session-empty');
+  list.innerHTML = '';  // clear all children (safe — we recreate empty div below)
+
   if (sessions.length === 0) {
-    empty.style.display = '';
-    list.innerHTML = '';
+    var empty = document.createElement('div');
+    empty.className = 'session-empty';
+    empty.id = 'session-empty';
+    empty.textContent = 'No chats yet.';
     list.appendChild(empty);
     return;
   }
-  empty.style.display = 'none';
-  list.innerHTML = '';
 
   var label = document.createElement('div');
   label.className = 'session-label';
