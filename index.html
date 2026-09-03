@@ -535,6 +535,17 @@ var ANSWERS = {
 var sessions = [];   // [{ id, title, isCustom, messages }]
 var activeId = null;
 var thinking = false;
+var pendingResolve = null;  // {fn, session, text} — fires on visibilitychange if timer was frozen
+
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && pendingResolve) {
+    var p = pendingResolve;
+    pendingResolve = null;
+    p.session.messages.push({ role: 'donna', text: p.text });
+    resolveThinking(p.text);
+    thinking = false;
+  }
+});
 
 /* ── Session helpers ── */
 function makeId() { return Date.now() + Math.random(); }
@@ -695,11 +706,13 @@ function sendSuggestion(btn) {
 
   thinking = true;
   var answer = ANSWERS[text] || "Here's what I found…";
+  pendingResolve = { session: session, text: answer };
   setTimeout(function() {
+    pendingResolve = null;
     session.messages.push({ role: 'donna', text: answer });
     resolveThinking(answer);
     thinking = false;
-  }, 1600);
+  }, 350);
 }
 
 /* ── Send custom ── */
@@ -725,11 +738,13 @@ function sendChat() {
 
   thinking = true;
   var reply = 'To use donna MCP, please connect to your Clio Account.';
+  pendingResolve = { session: session, text: reply };
   setTimeout(function() {
+    pendingResolve = null;
     session.messages.push({ role: 'donna', text: reply });
     resolveThinking(reply);
     thinking = false;
-  }, 1500);
+  }, 350);
 }
 
 /* ── Sidebar toggle (mobile) ── */
