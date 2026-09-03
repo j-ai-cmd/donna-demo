@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>donna MCP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #faf8f4;
+  --cream: #f0ead8;
+  --cream-mid: #ede6d2;
+  --cream-dark: #e8e0cc;
+  --cream-border: #d9d0b8;
+  --burgundy: #7a2e3b;
+  --burgundy-dark: #5e2230;
+  --ink: #1e1209;
+  --ink-soft: #5c4d3a;
+  --muted: #9a8a75;
+  --faint: #c4b8a4;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  font-family: 'Source Sans 3', sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HEADER */
+.header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 62px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--cream-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.wordmark {
+  font-family: 'Fraunces', serif;
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--burgundy);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.header-tag {
+  position: absolute;
+  right: 24px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* LAYOUT */
+.chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding-top: 62px;
+}
+
+/* CHAT AREA */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--cream-border); border-radius: 3px; }
+
+/* EMPTY STATE */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 0;
+  gap: 6px;
+}
+.empty-logo {
+  font-family: 'Fraunces', serif;
+  font-size: 4rem;
+  color: var(--burgundy);
+  font-weight: 400;
+  opacity: 0.18;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.empty-sub {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* SUGGESTIONS */
+.suggestions-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 20px 20px 0;
+}
+.chip {
+  border: 1px solid var(--cream-border);
+  background: var(--cream);
+  color: var(--ink-soft);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: 'Source Sans 3', sans-serif;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+.chip:hover {
+  background: var(--burgundy);
+  color: var(--cream);
+  border-color: var(--burgundy);
+}
+
+/* BUBBLES */
+.bubble-row { display: flex; }
+.bubble-row.user { justify-content: flex-end; }
+.bubble-row.donna { justify-content: flex-start; }
+
+.bubble {
+  max-width: 68%;
+  padding: 11px 16px;
+  border-radius: 18px;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.bubble-user {
+  background: var(--burgundy);
+  color: var(--cream);
+  border-radius: 18px 18px 4px 18px;
+}
+.bubble-donna {
+  background: var(--cream-dark);
+  color: var(--ink);
+  border-radius: 18px 18px 18px 4px;
+}
+
+/* THINKING DOTS */
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.7); }
+  40% { opacity: 1; transform: scale(1); }
+}
+.thinking-dots { display: flex; gap: 5px; align-items: center; padding: 4px 2px; }
+.thinking-dots span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* INPUT BAR */
+.input-bar {
+  padding: 12px 24px 24px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--cream-dark);
+  border: 1px solid var(--cream-border);
+  border-radius: 16px;
+  padding: 10px 14px;
+  max-width: 720px;
+  margin: 0 auto;
+  transition: border-color 0.15s;
+}
+.input-box:focus-within { border-color: var(--burgundy); }
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.87rem;
+  font-family: 'Source Sans 3', sans-serif;
+  color: var(--ink);
+}
+.chat-input::placeholder { color: var(--faint); }
+.send-btn {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  background: var(--burgundy);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+.send-btn:hover { background: var(--burgundy-dark); }
+
+@media (max-width: 600px) {
+  .bubble { max-width: 88%; }
+  .chat-area { padding: 0 14px 12px; }
+  .input-bar { padding: 10px 14px 20px; }
+  .suggestions-wrap { padding: 16px 14px 0; }
+  .empty-logo { font-size: 3rem; }
+  .header-tag { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="wordmark">donna</span>
+  <span class="header-tag">MCP</span>
+</div>
+
+<div class="chat-wrapper">
+  <div class="chat-area" id="chat-area">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-logo">donna</div>
+      <div class="empty-sub">Ask anything about your matters.</div>
+    </div>
+    <div class="suggestions-wrap" id="suggestions-wrap">
+      <button class="chip" onclick="sendSuggestion(this)">What's the update on the Johnson matter?</button>
+      <button class="chip" onclick="sendSuggestion(this)">What are my deadlines this week?</button>
+      <button class="chip" onclick="sendSuggestion(this)">Did NewFirmABC fill out their intake form?</button>
+      <button class="chip" onclick="sendSuggestion(this)">Pull all documents on the Smith estate.</button>
+      <button class="chip" onclick="sendSuggestion(this)">What's the deadline on the Robertson matter?</button>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-box">
+      <input
+        class="chat-input"
+        id="chat-input"
+        placeholder="Ask donna about your matters…"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+        autocomplete="off"
+      />
+      <button class="send-btn" onclick="sendChat()" aria-label="Send">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var answers = {
+  "What's the update on the Johnson matter?": "The Johnson matter is in the discovery phase. Opposing counsel's document response is due 2 September. The next hearing — a case management conference — is listed for 10 September at 10:00 AM.\n\nOutstanding task: review client affidavit before filing. No overdue items.",
+  "What are my deadlines this week?": "You have 3 deadlines this week:\n\n• Robertson v Robertson — Affidavit filing due Thursday 28 August\n• Chen matter — Response to discovery request due Friday 29 August\n• Davis — Cost agreement outstanding, flagged urgent\n\nNo items are currently overdue.",
+  "Did NewFirmABC fill out their intake form?": "Yes — Marcus Webb from NewFirmABC submitted the Estate Planning intake form on 22 August. All 6 pages are complete. The submission is ready to be converted to a matter. Would you like me to open it?",
+  "Pull all documents on the Smith estate.": "I found 14 documents on the Smith Estate matter:\n• Signed will (14 June 2024)\n• 3 EPA documents\n• Property disclosure statement\n• 6 letters of correspondence\n• 3 draft codicils\n\nThe most recent document was added 19 August. Which one would you like to open?",
+  "What's the deadline on the Robertson matter?": "The Robertson matter has one upcoming deadline: an affidavit must be filed by Thursday 28 August 2026.\n\nThere's also a mediation session booked for 10 September. No items are overdue on this matter."
+};
+
+var area = document.getElementById('chat-area');
+
+function hideSuggestions() {
+  document.getElementById('suggestions-wrap').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'none';
+}
+
+function addUserBubble(text) {
+  hideSuggestions();
+  var row = document.createElement('div');
+  row.className = 'bubble-row user';
+  var b = document.createElement('div');
+  b.className = 'bubble bubble-user';
+  b.textContent = text;
+  row.appendChild(b);
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+
+function addThinkingBubble() {
+  var row = document.createElement('div');
+  row.className = 'bubble-row donna';
+  row.id = 'thinking-row';
+  var b = document.createElement('div');
+  b.className = 'bubble bubble-donna';
+  b.innerHTML = '<div class="thinking-dots"><span></span><span></span><span></span></div>';
+  row.appendChild(b);
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+
+function resolveThinking(text) {
+  var row = document.getElementById('thinking-row');
+  if (row) {
+    row.querySelector('.bubble').textContent = text;
+    row.removeAttribute('id');
+  }
+  area.scrollTop = area.scrollHeight;
+}
+
+function sendSuggestion(btn) {
+  var text = btn.textContent.trim();
+  addUserBubble(text);
+  addThinkingBubble();
+  setTimeout(function() {
+    resolveThinking(answers[text] || "Here's what I found…");
+  }, 1600);
+}
+
+function sendChat() {
+  var inp = document.getElementById('chat-input');
+  var text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  addUserBubble(text);
+  addThinkingBubble();
+  setTimeout(function() {
+    resolveThinking('To use donna MCP, please connect to your Clio Account.');
+  }, 1500);
+}
+</script>
+</body>
+</html>
