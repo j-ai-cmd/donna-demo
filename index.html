@@ -109,6 +109,10 @@ html, body {
   line-height: 1;
   display: block;
   cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 .sidebar-donna:hover { opacity: 0.7; }
@@ -589,7 +593,8 @@ function thinkDelay(inputText) {
 }
 
 function scheduleResponse(session, text, inputText) {
-  cancelPending();
+  /* cancel only the timer — do NOT remove the thinking row (it was just added) */
+  if (pendingTimer !== null) { clearTimeout(pendingTimer); pendingTimer = null; }
   pendingSession = session;
   pendingText = text;
   pendingTimer = setTimeout(function() { deliverResponse(session, text); }, thinkDelay(inputText));
